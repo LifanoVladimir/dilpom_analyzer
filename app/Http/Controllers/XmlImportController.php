@@ -29,14 +29,18 @@ class XmlImportController extends Controller
             $session = new Session();
             $session->date_time = date('Y-m-d H:i:s', $epoch2000 + (int) $xml->DateTime);
             $session->duration = (int) $xml->Duration;
+            $session->user_id = auth()->id();
 
-            $existing = Session::where('date_time', $session->date_time)
+            
+            $existingSession = Session::where('date_time', $session->date_time)
                 ->where('duration', $session->duration)
                 ->first();
 
-            if (!$existing) {
-                $session->save();
+            if ($existingSession) {
+                continue;
             }    
+            $session->save();
+            $sessionId = $session->id;
 
             $accessPoints = $xml->xpath('//APFound');;
             foreach($accessPoints as $accessPoint){
@@ -53,18 +57,13 @@ class XmlImportController extends Controller
                     'max_speed' => (string)$accessPoint->X,
                     'hidden_ssid' =>  (bool)$accessPoint->H,
                 ]);
-                if (!$existing) {
-                    $session->accessPoints()->save($ap);
-                }
-            }
-            
-            $sessionsId[] = [
-                'date_time' => $session->date_time,
-                'duration' => $session->duration,
-            ];
+                
+                $session->accessPoints()->save($ap);                
+            }            
+            $sessionsId[] = $sessionId;
         }
 
-        return view('import-result', ['data' => $sessionsId]);
+        return redirect()->route('reports.index');
     }
 
     function hexToAscii(string $hex): string
