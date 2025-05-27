@@ -2,43 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccessPoint;
+use App\Models\Session;
 use Illuminate\Http\Request;
+use PhpParser\Node\Stmt\Foreach_;
 
 class XmlImportController extends Controller
 {
-        public function form()
+    public function form()
     {
         return view('import');
     }
 
     public function upload(Request $request)
-{
-    $request->validate([
-        'files.*' => 'required|file|mimes:xml',
-    ]);
+    {
+        $request->validate([
+         'files.*' => 'required|file|mimes:xml',
+        ]);
+        
+        $sessionsId = [];
 
-    $allData = [];
+        foreach ($request->file('files') as $file) {
+            $xml = simplexml_load_file($file->getRealPath());
+            $epoch2000 = 946684800;
 
-    foreach ($request->file('files') as $file) {
-        $xml = simplexml_load_file($file->getRealPath());
+            $session = new Session();
+            $session->date_time = date('Y-m-d H:i:s', $epoch2000 + (int) $xml->DateTime);
+            $session->duration = (int) $xml->Duration;
 
-        $data = [
-            'date_time' => (string) $xml->DateTime,
-            'duration' => (string) $xml->Duration,
-            'serial_number' => trim((string) $xml->DeviceUsed->SerialNumber),
-            'ui_version' => (string) $xml->DeviceUsed->UIVersion,
-            'profile_path' => (string) $xml->Profile->OriginalProfile,
-            'ap_mac' => (string) $xml->Profile->AP->M,
-            'ap_location' => (string) $xml->Profile->AP->V_C,
-            'min_signal' => (string) $xml->Profile->SignalMetrics->MinSig,
-            'tx_rate_green' => (string) $xml->Profile->SignalMetrics->TxRate->TxRtGreen,
-        ];
+            $existing = Session::where('date_time', $session->date_time)
+                ->where('duration', $session->duration)
+                ->first();
 
-        $allData[] = $data;
+            if (!$existing) {
+                $session->save();
+            }    
+
+            $accessPoints = $xml->xpath('//APFound');;
+            foreach($accessPoints as $accessPoint){
+                $ap = new AccessPoint([
+                    'AP_name' => $this->hexToAscii($accessPoint->S),
+                    'channel' => intval(((int)$accessPoint->CH) / 5 - 2407),
+                    'datetime_ap_scan' => date('Y-m-d H:i:s', $epoch2000 + (int) $accessPoint->FH),
+                    'signal_level' => (int)$accessPoint->LS,
+                    'speed_diapozon' =>  (string)$accessPoint->SR,
+                    'shifr_type' =>  (string)$accessPoint->SEC,
+                    '802_11_support' =>  (bool)$accessPoint->F4,
+                    'ABG_support' => (bool)$accessPoint->ABG,
+                    'AG_support' =>  (bool)$accessPoint->AG,
+                    'max_speed' => (string)$accessPoint->X,
+                    'hidden_ssid' =>  (bool)$accessPoint->H,
+                ]);
+                if (!$existing) {
+                    $session->accessPoints()->save($ap);
+                }
+            }
+            
+            $sessionsId[] = [
+                'date_time' => $session->date_time,
+                'duration' => $session->duration,
+            ];
+        }
+
+        return view('import-result', ['data' => $sessionsId]);
     }
 
-    return view('import-result', ['data' => $allData]);
-}
+    function hexToAscii(string $hex): string
+    {
+        $ascii = '';
+        // Разбиваем строку на байты (по 2 символа)
+        for ($i = 0; $i < strlen($hex); $i += 2) {
+            $byte = substr($hex, $i, 2);
+            // Преобразуем hex байт в символ
+            $ascii .= chr(hexdec($byte));
+        }
+        return $ascii;
+    }
+    
 
 
 }
