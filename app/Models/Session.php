@@ -12,6 +12,7 @@ class Session extends Model
     protected $fillable = [
         'date_time',
         'duration',
+        'user_id'
     ];
 
     public $timestamps = true;
@@ -20,4 +21,8 @@ class Session extends Model
     {
         return $this->hasMany(AccessPoint::class);
     }
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
 }

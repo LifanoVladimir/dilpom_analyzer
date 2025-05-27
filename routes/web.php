@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\XmlImportController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,8 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/import', [XmlImportController::class, 'form'])->name('import.form');
 Route::post('/import', [XmlImportController::class, 'upload'])->name('import.upload');
+
+Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('auth');
 
 
 require __DIR__.'/auth.php';
