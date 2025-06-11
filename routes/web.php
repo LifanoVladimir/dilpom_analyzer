@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\FloorPlanController;
+use App\Http\Controllers\HeatmapController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\XmlImportController;
@@ -32,6 +34,11 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/import', [XmlImportController::class, 'form'])->name('import.form');
 Route::post('/import', [XmlImportController::class, 'upload'])->name('import.upload');
+
+Route::get('/heatmap', [HeatmapController::class, 'form'])->name('heatmap.form');
+Route::post('/heatmap', [HeatmapController::class, 'upload'])->name('heatmap.upload');
+
+Route::get('/floor-plans', [FloorPlanController::class, 'show'])->name('floor-plans.show');
 
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('auth');
 

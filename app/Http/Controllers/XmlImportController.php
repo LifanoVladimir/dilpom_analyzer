@@ -34,6 +34,7 @@ class XmlImportController extends Controller
             
             $existingSession = Session::where('date_time', $session->date_time)
                 ->where('duration', $session->duration)
+                ->where('user_id', $session->user_id)
                 ->first();
 
             if ($existingSession) {

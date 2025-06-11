@@ -13,7 +13,16 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        {{ __('Инструкция') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('import.form')" :active="request()->routeIs('import')">
+                        {{ __('Добавить файлы') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports')">
+                        {{ __('Отчёты') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('heatmap.form')" :active="request()->routeIs('heatmap')">
+                        {{ __('Тепловая карта') }}
                     </x-nav-link>
                 </div>
             </div>
